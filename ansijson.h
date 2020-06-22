@@ -11,6 +11,7 @@
 #define ANSIJSON
 
 struct aJSON {
+ /* Structure types: ((>5)=*Container, 0=Array, 1=Object, -2=Member, 2=Number, 3=String, 4=Bool */
   struct aJSON  *next, *prev, **list,
                 *child, *parent;
   union { double *number; char *string; };
@@ -20,7 +21,6 @@ struct aJSON {
 
 long *ansijson (unsigned char action, long *data)
 {
-  /* Subroutine types:   (<-5)=-*Array, (>5)=*Object, 0=Array, 1=Object, -2=Member, 2=Number, 3=String, 4=Bool */
   long   i_SP,*_SP =     (long*) malloc((i_SP=0xF)*sizeof(long)), *SP=_SP;
   struct aJSON *parse =  (struct aJSON*) calloc(1,sizeof(struct aJSON)), /* Parse buffer */ *_parse=parse;
   char   *src=data,*RTN, /* Encoding result */ *_src=src, *__src=src;
@@ -39,51 +39,35 @@ long *ansijson (unsigned char action, long *data)
   {
     *SP=-1; /* Define stack bottom as -1 */
     while (*src<0x21) src++; /* Find first data structure */
-    if (*src==0x5B) { *(++SP)=-(long)parse; action=1; goto _LEX_CONTAINER; }
-    if (*src==0x7B) { action=2; goto _LEX_CONTAINER; }
-      else goto _ERROR;
+    if (*src!=0x5B && *src!=0x7B) goto _ERROR;
+    (parse->parent=malloc(sizeof(struct aJSON)))->type=*src==0x7B;
+    parse->parent->child=parse;
+    parse->type=*src==0x7B;
+    src++; goto _LEX_CONTAINER;
 
    _RTS:
     switch (*(--SP))
     {
       case 0: case 1:
       _LEX_ARRAY: _LEX_OBJECT: _LEX_CONTAINER:
-        if (!*src) goto _RTS;
-        while (*src<0x21) src++;
-        if ((*src==0x5D || *src==0x7D) && src++) goto _RTS;
-        if (*SP==1 || *SP>5 || *src==0x7B) { Y=0; goto _LEX_MEMBER; } /* Y=Bool: Key accepted */
-        else goto _LEX_ELEMENT;
+        while (*src&&*src<0x21) src++;
+        if (!*src) goto _EOF;
+        if (parse->parent->type==0)
+          goto _LEX_ELEMENT; else { Y=0; goto _LEX_MEMBER; } /* Y=Bool: Key accepted */
 
       case -1: default:
-        if (((*src!=0x2C && !parse->next)
-             || (*src==0x2C && parse->child)
-             || !(*src==0x2C && !parse->next && !parse->child)
-            ) && (*SP<5||*SP>5))
-          parse = *SP<0?-*SP:*SP;
-
-        if (*src==0x7D || *src==0x5D || (*src==0x2C && parse->child && src++))
-        {
-          if (*src!=0x2C && !*(++src)) goto _EOF;
-          while (*src<0x21) src++;
-         _PRTS: if (*(SP-1)!=-1 && *(SP)!=(long)parse && -*(SP)!=(long)parse) { SP--; goto _PRTS; }
-          goto _RTS;
+        while (*src&&*src<0x21) src++;
+        switch (*src) {
+          case 0x2C: src++; goto _LEX_CONTAINER;
+          case 0x5D: case 0x7D: src++; parse=*(SP-1); goto _RTS;
+          case 0x00: goto _EOF;
+          default: goto _ERROR;
         }
 
-        if (*SP<-5) {
-          if (*src==0x5D) src++;
-          if (((struct aJSON*)-*SP)->next && parse!=((struct aJSON*)-*SP)->next) parse=(struct aJSON*)-*SP;
-          if (parse->next) goto _RTS; else goto _LEX_ARRAY; } else
-        if (*SP>5) {
-          if (parse->next && parse!=((struct aJSON*)*SP)->next) parse=(struct aJSON*)*SP;
-          if (parse->next) goto _RTS; else
-          if (!parse->number&&!parse->string&&!parse->child) goto _LEX_MEMBER;
-          else goto _LEX_OBJECT; }
-
-      _EOF: return (long*) (action==1 ? _parse : _parse->child);
+      _EOF: return (long*) _parse;
     }
 
    _LEX_ELEMENT:
-    if (*src==0x5B) src++;
     while (*src<0x21 || *src==0x2C) src++;
     goto _LEX_VALUE;
 
@@ -112,23 +96,22 @@ long *ansijson (unsigned char action, long *data)
         parse=parse->next;
         parse->parent=parse->prev->parent;
         (parse->list=parse->prev->list)[parse->index=parse->prev->index+1] = parse;
-        *SP = *SP<-5?-(long)parse:(long)parse;
+        *SP=(long)parse;
       }
 
-      /* Container nesting */
+      /* MAlloc new child struct */
       if ((*src==0x5B || *src==0x7B) && !parse->child) {
         *(++SP)=parse;
         (parse->child=(struct aJSON*)malloc(sizeof(struct aJSON)))->parent=parse;
         parse=parse->child;
       }
 
-      switch (*src)
-      {
-        case 0x5B: *(++SP)=-(long)parse; src++; goto _LEX_ARRAY;
-        case 0x7B: *(++SP)=(long)parse; src++; goto _LEX_OBJECT;
-        case 0x22: *(++SP)=3; parse->type=2; src++; goto _LEX_STRING;
-        case 0x2D: case 0x30 ... 0x39: parse->type=1; *(++SP)=2; goto _LEX_NUMBER;
-        case 0x61 ... 0x7A: parse->type=3; *(++SP)=4; goto _LEX_BOOL;
+      switch (*src) {
+        case 0x5B: *(++SP)=(long)parse; (Y&&parse->parent?parse->parent:parse)->type=0; src++; goto _LEX_ARRAY;
+        case 0x7B: *(++SP)=(long)parse; (Y&&parse->parent?parse->parent:parse)->type=1; src++; goto _LEX_OBJECT;
+        case 0x22: *(++SP)=3; parse->type=3; src++; goto _LEX_STRING;
+        case 0x2D: case 0x30 ... 0x39: parse->type=2; *(++SP)=2; goto _LEX_NUMBER;
+        case 0x61 ... 0x7A: parse->type=4; *(++SP)=4; goto _LEX_BOOL;
         case 0x00: goto _EOF;
         default: _ERROR: X=Y=1; /* X=Line, Y=Column */
           while (_src<src) if (*(_src++)!=0x0A) Y++; else { X++; Y=1; } /* Find line/column */
@@ -162,7 +145,7 @@ long *ansijson (unsigned char action, long *data)
       }
 
       if (*src==0x22) src++;
-      parse->string = (char*)malloc(A=0x7F); X=-1;
+      parse->string = (char*)calloc(A=0x7F, 1); X=-1;
 
      _PARSE_CHAR:
       if (++X>=A) parse->string = (char*) realloc(parse->number, A+=0x7F);
@@ -229,13 +212,13 @@ long *ansijson (unsigned char action, long *data)
     /* ERTS */
     if (*SP!=-1)
       if (!parse->next && ((struct aJSON*)*SP)->next)
-        {
-          parse=((struct aJSON*)*SP)->next;
-          if (*(SP+1)==parse->child) goto _ERIGHT;
-          if (*(src-1)==']'||*(src-1)=='}') sprintf((src+=2)-2,", ");
-          goto _ERTS;
-        }
-        else if (!parse->next) goto _ERIGHT; else { parse=parse->next; goto _ERTS; };
+      {
+        parse=((struct aJSON*)*SP)->next;
+        if (*(SP+1)==parse->child) goto _ERIGHT;
+        if (*(src-1)==']'||*(src-1)=='}') sprintf((src+=2)-2,", ");
+        goto _ERTS;
+      }
+      else if (!parse->next) goto _ERIGHT; else { parse=parse->next; goto _ERTS; };
 
    _ERTN: return (long*) RTN;
   }
