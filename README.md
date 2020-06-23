@@ -2,7 +2,6 @@
 [*ANSI JSON*](https://ansijson.com) is a single-file, portable & lightweight [JSON](https://json.org) parser/encoder/decoder written in ANSI C. It is compatible with ANSI C/C++ compilers and above.
 
 I wrote this library for a few upcoming projects. Feel free to use this in your own project.
-If you give credit to using ANSI JSON, let me know so I can add your project (proj name & url) to the list of references.
 
 ## Usage
 There are **two** definitions involved in *ANSI JSON*:
