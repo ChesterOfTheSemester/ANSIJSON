@@ -52,7 +52,7 @@ long *ansijson (unsigned char action, long *data)
         while (*src&&*src<0x21) src++;
         switch (*src) {
           case 0x2C: src++; goto _LEX_CONTAINER;
-          case 0x5D: case 0x7D: src++; parse=(struct aJSON*) *(SP-(*(SP-2)!=-1&&parse->parent->type==1?2:1)); goto _RTS;
+          case 0x5D: case 0x7D: src++; parse=parse->parent; while(*SP!=-1&&*SP!=(long)parse) SP--; goto _RTS;
           case 0x00: goto _EOF;
           default: goto _ERROR;
         }
