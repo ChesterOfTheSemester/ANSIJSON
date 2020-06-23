@@ -4,17 +4,15 @@
  *
  * Written by : Chester Abrahams
  * Portfolio  : https://atomiccoder.com
- * LinkedIn   : https://www.linkedin.com/in/atomiccoder/
- */
+ * LinkedIn   : https://www.linkedin.com/in/atomiccoder/ */
 
 #ifndef ANSIJSON
 #define ANSIJSON
 
 struct aJSON {
- /* Structure types: ((>5)=*Container, 0=Array, 1=Object, -2=Member, 2=Number, 3=String, 4=Bool */
   struct aJSON  *next, *prev, **list, *child, *parent;
   union { double *number; char *string; };
-  unsigned char *key, type;
+  unsigned char *key, type; /* Types: ((>5)=*Container, 0=Array, 1=Object, -2=Member, 2=Number, 3=String, 4=Bool */
   unsigned int  index;
 };
 
@@ -48,13 +46,13 @@ long *ansijson (unsigned char action, long *data)
         while (*src&&*src<0x21) src++;
         if (!*src) goto _EOF;
         if (parse->parent->type==0)
-          goto _LEX_ELEMENT; else { Y=0; goto _LEX_MEMBER; } /* Y=Bool: Key accepted */
+          goto _LEX_ELEMENT; else { Y=0; goto _LEX_MEMBER; } /* Y=Bool: Member-key accepted */
 
       case -1: default:
         while (*src&&*src<0x21) src++;
         switch (*src) {
           case 0x2C: src++; goto _LEX_CONTAINER;
-          case 0x5D: case 0x7D: src++; parse=(struct aJSON*) *(SP-1); goto _RTS;
+          case 0x5D: case 0x7D: src++; parse=(struct aJSON*) *(SP-(*(SP-2)!=-1&&parse->parent->type==1?2:1)); goto _RTS;
           case 0x00: goto _EOF;
           default: goto _ERROR;
         }
@@ -132,8 +130,7 @@ long *ansijson (unsigned char action, long *data)
 
    _LEX_STRING: /* A=MAlloc Size, X=Char Counter */
     {
-      /* MAlloc if member key string is next member of object */
-      if (*SP==-2 && (parse->string || parse->number)) {
+      if (*SP==-2 && (parse->string || parse->number)) { /* MAlloc if member key string is next member of object */
         parse->next = (struct aJSON*) malloc(sizeof(struct aJSON));
         parse->next->prev=parse; parse=parse->next;
         (parse->list=parse->prev->list)[parse->index=parse->prev->index+1] = parse;
