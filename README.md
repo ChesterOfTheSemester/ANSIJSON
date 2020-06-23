@@ -43,12 +43,12 @@ There are **two** definitions involved in *ANSI JSON*:
 struct aJSON *_data = ansijson(0, "{ \"test\": [ 1, 2, 3 ] }");
 ```
 
-### Parsing *structures* to a formatted *string*
+### Parsing (struct aJSON*) to a formatted (char*)
 ```c
 char *_string = ansijson(1, _data);
 ```
 
-### Parsing *structures* to a minified *string*
+### Parsing (struct aJSON*) to a minified (char*)
 ```c
 char *_string = ansijson(2, _data);
 ```
