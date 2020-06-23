@@ -53,3 +53,18 @@ char *_string = ansijson(1, _data);
 ```c
 char *_string = ansijson(2, _data);
 ```
+## Utility
+Here are some helpful functions that go along with aJSON:
+```c
+/* Finding an aJSON struct from a lookup pattern */
+struct aJSON *ajsonLookup(struct aJSON *json, char *query[], unsigned int len)
+{ /* Example query: {"index/key"} */
+  int i=0; ajson_find:
+  if ( (json->key && strcmp(json->key,query[i])==0)
+      || (json->index==(int)query[i]) )
+    if (i+1>len-1) return json;
+    else { i++; json=json->child; goto ajson_find; }
+  else if (json->next) { json=json->next; goto ajson_find; }
+  else return (struct aJSON*)0;
+}
+```
