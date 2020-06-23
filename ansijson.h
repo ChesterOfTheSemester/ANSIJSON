@@ -24,9 +24,9 @@ long *ansijson (unsigned char action, long *data)
   double A,X,Y;
 
   switch (action) {
-    case 0: goto _DECODE;              /* Decode */
-    case 1: action=1; goto _ENCODE;    /* Encode formatted */
-    case 2: action=0; goto _ENCODE;    /* Encode minified */
+    case 0: goto _DECODE;           /* Decode */
+    case 1: action=1; goto _ENCODE; /* Encode formatted */
+    case 2: action=0; goto _ENCODE; /* Encode minified */
   }
 
  _DECODE:
