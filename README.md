@@ -38,17 +38,17 @@ There are **two** definitions involved in *ANSI JSON*:
 ```
 * Or copy the code in between the `#ifndef` directives in *ansijson.h*
 
-### Parsing a *string* to *structures*
+### Decode (char*) to (struct aJSON*) 
 ```c
 struct aJSON *_data = ansijson(0, "{ \"test\": [ 1, 2, 3 ] }");
 ```
 
-### Parsing (struct aJSON*) to a formatted (char*)
+### Encode (struct aJSON*) to a formatted (char*)
 ```c
 char *_string = ansijson(1, _data);
 ```
 
-### Parsing (struct aJSON*) to a minified (char*)
+### Encode (struct aJSON*) to a minified (char*)
 ```c
 char *_string = ansijson(2, _data);
 ```
