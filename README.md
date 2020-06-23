@@ -18,16 +18,16 @@ There are **two** definitions involved in *ANSI JSON*:
     unsigned char *key,                       /* String if struct is of type object-member */
                   type;                       /* Type of value: 0=Container, 1=Number, 2=String, 3=Bool */
     unsigned int  index;                      /* All structs are indexed by nesting level */
-    union { double *number; char *string; };  /* The value */
+    union { double *number; char *string; };  /* The value, union */
   }
 ```
 
 ```c
   /* Main function used for decoding & encoding
   *  The value of action determines the function's behavior and return value
-  *    0) Decode: expects *src to be of type char*, returns struct aJSON*
-  *    1) Encode formatted: expects *src to be of type struct aJSON, returns char*
-  *    2) Encode minified: same as 1, but the resulting string is minified */
+  *    0) Decode: decodes JSON *String* (char*) to *Struct* (struct aJSON*) 
+  *    1) Encode formatted: encodes *Struct* (struct aJSON*) to JSON *String* (char*)
+  *    2) Encode minified: encodes *Struct* (struct aJSON*) to JSON *String* (char*)
     
   long *ansijson (unsigned char action, long *data)
 ```
@@ -44,12 +44,12 @@ There are **two** definitions involved in *ANSI JSON*:
 struct aJSON *_data = ansijson(0, "{ \"test\": [ 1, 2, 3 ] }");
 ```
 
-### Parsing *structures* to a formatted *string* (WIP)
+### Parsing *structures* to a formatted *string*
 ```c
 char *_string = ansijson(1, _data);
 ```
 
-### Parsing *structures* to a minified *string* (WIP)
+### Parsing *structures* to a minified *string*
 ```c
 char *_string = ansijson(2, _data);
 ```
