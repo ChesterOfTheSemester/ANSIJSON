@@ -25,9 +25,9 @@ There are **two** definitions involved in *ANSI JSON*:
 ```c
   /* Main function used for decoding & encoding
   *  The value of action determines the function's behavior and return value
-  *    0) Decode: decodes JSON *String* (char*) to *Struct* (struct aJSON*) 
-  *    1) Encode formatted: encodes *Struct* (struct aJSON*) to JSON *String* (char*)
-  *    2) Encode minified: encodes *Struct* (struct aJSON*) to JSON *String* (char*) */
+  *    0) Decode: decodes (char*) to (struct aJSON*) 
+  *    1) Encode formatted: encodes (struct aJSON*) to (char*)
+  *    2) Encode minified: encodes (struct aJSON*) to (char*) */
     
   long *ansijson (unsigned char action, long *data)
 ```
