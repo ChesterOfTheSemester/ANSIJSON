@@ -70,6 +70,9 @@ struct aJSON *ajsonLookup(struct aJSON *json, char *query[], unsigned int len)
 }
 ```
 ```c
+/* Example: {"node1":{"node2":{"node3":[11,22,33]}}} */
 struct aJSON *_data = ansijson(0, "{ \"node1\": { \"node2\": { \"node3\": [ 11, 22, 33 ] } } }");
+
+/* This lookup is equivalent to a JavaScript lookup: _data["node1"]["node2"]["node3"][0] */
 struct aJSON *_result = ajsonLookup(_data, (char*[]){"node1","node2","node3",0}, 4);
 ```
