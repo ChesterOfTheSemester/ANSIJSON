@@ -12,8 +12,7 @@
 
 struct aJSON {
  /* Structure types: ((>5)=*Container, 0=Array, 1=Object, -2=Member, 2=Number, 3=String, 4=Bool */
-  struct aJSON  *next, *prev, **list,
-                *child, *parent;
+  struct aJSON  *next, *prev, **list, *child, *parent;
   union { double *number; char *string; };
   unsigned char *key, type;
   unsigned int  index;
@@ -27,11 +26,9 @@ long *ansijson (unsigned char action, long *data)
   double A,X,Y;
 
   switch (action) {
-    case 0: goto _DECODE;       /* Decode */
-    case 1: X=1; goto _ENCODE;  /* Encode formatted */
-    case 2: X=0; goto _ENCODE;  /* Encode minified */
-    case 3:;                    /* Format */
-    case 4:;                    /* Minimize */
+    case 0: goto _DECODE;              /* Decode */
+    case 1: action=1; goto _ENCODE;    /* Encode formatted */
+    case 2: action=0; goto _ENCODE;    /* Encode minified */
   }
 
  _DECODE:
@@ -105,8 +102,8 @@ long *ansijson (unsigned char action, long *data)
       }
 
       switch (*src) {
-        case 0x5B: *(++SP)=(long)parse; (Y&&parse->parent?parse->parent:parse)->type=0; src++; goto _LEX_ARRAY;
-        case 0x7B: *(++SP)=(long)parse; (Y&&parse->parent?parse->parent:parse)->type=1; src++; goto _LEX_OBJECT;
+        case 0x5B: *(++SP)=(long)parse; (Y?parse->parent:parse)->type=0; src++; goto _LEX_ARRAY;
+        case 0x7B: *(++SP)=(long)parse; (Y?parse->parent:parse)->type=1; src++; goto _LEX_OBJECT;
         case 0x22: *(++SP)=3; parse->type=3; src++; goto _LEX_STRING;
         case 0x2D: case 0x30 ... 0x39: parse->type=2; *(++SP)=2; goto _LEX_NUMBER;
         case 0x61 ... 0x7A: parse->type=4; *(++SP)=4; goto _LEX_BOOL;
@@ -166,8 +163,8 @@ long *ansijson (unsigned char action, long *data)
 
  _ENCODE:
   {
-    parse = (struct aJSON*) data;
-    RTN = src = (char*) malloc((size_t)(Y=0xFF));
+    A=X=1; parse=_parse= (struct aJSON*) data;
+    RTN = src = (char*) malloc((size_t)(Y=0xFFFF));
     _src=__src = (char*) malloc(0xFF);
 
    _ERTS:
@@ -176,7 +173,10 @@ long *ansijson (unsigned char action, long *data)
     if (!parse->parent) goto _ERTN;
 
     /* Left */
-    if (!parse->prev) *(src++) = !parse->parent->type?0x5B:0x7B;
+    if (!parse->prev) {
+      *(src++) = !parse->parent->type?0x5B:0x7B;
+      if (action) { *(src++)=0xA; for (X=0;X<A;X++) sprintf((src+=2)-2,"  "); }
+    }
 
     /* Key */
     if (parse->key) {
@@ -186,7 +186,7 @@ long *ansijson (unsigned char action, long *data)
     }
 
     /* Value */
-    if (parse->child) { parse=parse->child; goto _ERTS; }
+    if (parse->child) { A++; parse=parse->child; goto _ERTS; }
     else {
       switch (parse->type) {
         case 2: if (*parse->number==(int)*parse->number)
@@ -202,10 +202,16 @@ long *ansijson (unsigned char action, long *data)
     }
 
    _ERIGHT: /* Next / Right / ERTS / Return */
-    if (parse->next) { parse=parse->next; sprintf((src+=2)-2,", "); goto _ERTS; }
-    if (!parse->parent) goto _ERTN;
+    if (parse->next) {
+      parse=parse->next; sprintf((src+=2)-2,", ");
+      if (action) { *(src++)=0xA; for (X=0;X<A;X++) sprintf((src+=2)-2,"  "); }
+      goto _ERTS;
+    }
+
+    if (!parse->parent || _parse==parse) goto _ERTN;
+    if (action) { *(src++)=0xA; for (X=0;X<A-1;X++) sprintf((src+=2)-2,"  "); }
     *(src++) = !parse->parent->type?0x5D:0x7D;
-    if (parse->parent) { parse=parse->parent; goto _ERIGHT; }
+    if (parse->parent) { A--; parse=parse->parent; goto _ERIGHT; }
 
    _ERTN: return (long*) RTN;
   }
