@@ -60,7 +60,7 @@ Here are some helpful functions that go along with aJSON:
 struct aJSON *ajsonLookup(struct aJSON *json, char *query[], unsigned int len)
 { /* Example query: {"index/key"} */
   int i=0; ajson_find:
-  if ( (json->key && strcmp(json->key,query[i])==0)
+  if ( (json->key && query[i] && strcmp(json->key,query[i])==0)
       || (json->index==(int)query[i]) )
     if (i+1>len-1) return json;
     else { i++; json=json->child; goto ajson_find; }
@@ -75,4 +75,8 @@ struct aJSON *_data = ansijson(0, "{ \"node1\": { \"node2\": { \"node3\": [ 11, 
 /* This lookup is equivalent to a JavaScript lookup: _data["node1"]["node2"]["node3"][1] */
 struct aJSON *_result = ajsonLookup(_data, (char*[]){"node1","node2","node3",1}, 4);
 printf("%d", result->number); /* The expected output is 22 */
+
+/* Tip: You can use mixed keys & indexes */
+struct aJSON *_data = ansijson(0, "{ \"node0\": { \"node1\": 1, \"node2\": { \"node3\": [ 11, 22, 33 ] } } }");
+struct aJSON *_result = ajsonLookup(_data, (char*[]){"node0",1,"node3",1}, 4);
 ```
