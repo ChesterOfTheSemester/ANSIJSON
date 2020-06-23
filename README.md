@@ -60,7 +60,7 @@ Here are some helpful functions that go along with aJSON:
 struct aJSON *ajsonLookup(struct aJSON *json, char *query[], unsigned int len)
 { /* Example query: {"index/key"} */
   int i=0; ajson_find:
-  if ( (json->key && query[i] && strcmp(json->key,query[i])==0)
+  if ( (json->key && query[i]>0xFFFFFF && strcmp(json->key,query[i])==0)
       || (json->index==(int)query[i]) )
     if (i+1>len-1) return json;
     else { i++; json=json->child; goto ajson_find; }
