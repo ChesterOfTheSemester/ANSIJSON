@@ -75,4 +75,5 @@ struct aJSON *_data = ansijson(0, "{ \"node1\": { \"node2\": { \"node3\": [ 11, 
 
 /* This lookup is equivalent to a JavaScript lookup: _data["node1"]["node2"]["node3"][1] */
 struct aJSON *_result = ajsonLookup(_data, (char*[]){"node1","node2","node3",1}, 4);
+printf("%d", result->number); /* The expected output is 22 */
 ```
