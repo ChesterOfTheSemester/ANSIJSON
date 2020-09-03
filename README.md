@@ -28,7 +28,7 @@ There are **two** definitions involved in *ANSI JSON*:
   *    1) Encode formatted: encodes (struct aJSON*) to (char*)
   *    2) Encode minified: encodes (struct aJSON*) to (char*) */
     
-  long *ansijson (char action, long *data)
+  long *ansijson (char action, long *data);
 ```
 
 ### How to incorporate ANSI JSON in your project
