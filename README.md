@@ -14,7 +14,7 @@ There are **two** definitions involved in *ANSI JSON*:
                   **list,                     /* Array of pointers to neighboring structs */
                   *child,                     /* Pointer to child-nested struct if the value is of type object or element */
                   *parent;                    /* Pointer to parent-nested struct  */
-    unsigned char *key,                       /* String if struct is of type object-member */
+    char          *key,                       /* String if struct is of type object-member */
                   type;                       /* Type of value: 0=Container, 1=Number, 2=String, 3=Bool */
     unsigned int  index;                      /* All structs are indexed by nesting level */
     union { double *number; char *string; };  /* The value, union */
@@ -28,7 +28,7 @@ There are **two** definitions involved in *ANSI JSON*:
   *    1) Encode formatted: encodes (struct aJSON*) to (char*)
   *    2) Encode minified: encodes (struct aJSON*) to (char*) */
     
-  long *ansijson (unsigned char action, long *data)
+  long *ansijson (char action, long *data)
 ```
 
 ### How to incorporate ANSI JSON in your project
@@ -39,18 +39,19 @@ There are **two** definitions involved in *ANSI JSON*:
 * Or copy the code in between the `#ifndef` directives in *ansijson.h*
 
 ### Decode (char*) to (struct aJSON*) 
+Make use of casting in order to avoid compiler specific warnings.
 ```c
-struct aJSON *_data = ansijson(0, "{ \"test\": [ 1, 2, 3 ] }");
+struct aJSON *_data = (struct aJSON*) ansijson(0, (long*) "{ \"test\": [ 1, 2, 3 ] }");
 ```
 
 ### Encode (struct aJSON*) to a formatted (char*)
 ```c
-char *_string = ansijson(1, _data);
+char *_string = (char*) ansijson(1, (long*) _data);
 ```
 
 ### Encode (struct aJSON*) to a minified (char*)
 ```c
-char *_string = ansijson(2, _data);
+char *_string = (char*) ansijson(2, (long*) _data);
 ```
 ## Utility
 Here are some helpful functions that go along with aJSON:
@@ -70,13 +71,13 @@ struct aJSON *ajsonLookup(struct aJSON *json, char *query[], unsigned int len)
 ```
 ```c
 /* Example: {"node1":{"node2":{"node3":[11,22,33]}}} */
-struct aJSON *_data = ansijson(0, "{ \"node1\": { \"node2\": { \"node3\": [ 11, 22, 33 ] } } }");
+struct aJSON *_data = (struct aJSON*) ansijson(0, (long*) "{ \"node1\": { \"node2\": { \"node3\": [ 11, 22, 33 ] } } }");
 
 /* This lookup is equivalent to a JavaScript lookup: _data["node1"]["node2"]["node3"][1] */
-struct aJSON *_result = ajsonLookup(_data, (char*[]){"node1","node2","node3",1}, 4);
+struct aJSON *_result = (struct aJSON*) ajsonLookup(_data, (char*[]){"node1","node2","node3",1}, 4);
 printf("%d", result->number); /* The expected output is 22 */
 
 /* Tip: You can use mixed keys & indexes */
-struct aJSON *_data = ansijson(0, "{ \"node0\": { \"node1\": 1, \"node2\": { \"node3\": [ 11, 22, 33 ] } } }");
+struct aJSON *_data = (struct aJSON*) ansijson(0, (long*) "{ \"node0\": { \"node1\": 1, \"node2\": { \"node3\": [ 11, 22, 33 ] } } }");
 struct aJSON *_result = ajsonLookup(_data, (char*[]){"node0",1,"node3",1}, 4);
 ```
