@@ -1,6 +1,5 @@
-/* ANSI JSON 0.1
+/* ANSI JSON 0.2
  * https://ansijson.com
- * This code is licensed under MIT
  *
  * Written by : Chester Abrahams
  * Portfolio  : https://atomiccoder.com
@@ -9,17 +8,25 @@
 #ifndef ANSIJSON
 #define ANSIJSON
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define ANSIJSON_DECODE 0
+#define ANSIJSON_ENCODE 1
+#define ANSIJSON_MINIFY 2
+
 struct aJSON {
   struct aJSON  *next, *prev, **list, *child, *parent;
   union { double *number; char *string; };
-  unsigned char *key, type; /* Types: ((>5)=*Container, 0=Array, 1=Object, -2=Member, 2=Number, 3=String, 4=Bool */
+  char *key, type; /* Types: ((>5)=*Container, 0=Array, 1=Object, -2=Member, 2=Number, 3=String, 4=Bool */
   unsigned int  index;
 };
 
-long *ansijson (unsigned char action, long *data)
+long *ansijson (char action, long *data)
 {
-  long   i_SP,*_SP =     (long*) malloc((i_SP=0xF)*sizeof(long)), *SP=_SP;
-  struct aJSON *parse =  (struct aJSON*) calloc(1,sizeof(struct aJSON)), /* Parse buffer */ *_parse=parse;
+  long   i_SP,*_SP =     (long*) calloc(2,(i_SP=0xF)*sizeof(long)), *SP=_SP;
+  struct aJSON *parse =  (struct aJSON*) calloc(2, sizeof(struct aJSON)), /* Parse buffer */ *_parse=parse;
   char   *src=(char*)data,*RTN, /* Encoding result */ *_src=src, *__src=src;
   double A,X,Y;
 
@@ -45,7 +52,7 @@ long *ansijson (unsigned char action, long *data)
       _LEX_ARRAY: _LEX_OBJECT: _LEX_CONTAINER:
         while (*src&&*src<0x21) src++;
         if (!*src) goto _EOF;
-        if (parse->parent->type==0)
+        if (parse->parent && !parse->parent->type)
           goto _LEX_ELEMENT; else { Y=0; goto _LEX_MEMBER; } /* Y=Bool: Member-key accepted */
 
       case -1: default:
@@ -66,8 +73,8 @@ long *ansijson (unsigned char action, long *data)
 
    _LEX_MEMBER:
     while (*src<0x21 || *src==0x3A || *src==0x2C || *src==0x5C) src++;
-    if (parse->key && (parse->number||parse->string||parse->child)) { Y=0; /* MAlloc if member key string originates from a subroutine  */
-      parse->next = (struct aJSON*) malloc(sizeof(struct aJSON));
+    if (parse->key && (parse->number||parse->string||parse->child)) { Y=0; /* Allocate neighbor if member key string originates from a subroutine  */
+      parse->next = (struct aJSON*) calloc(2, sizeof(struct aJSON));
       parse->next->prev = parse; parse = parse->next;
       parse->parent = parse->prev->parent;
       (parse->list=parse->prev->list)[parse->index=parse->prev->index+1] = parse;
@@ -80,42 +87,41 @@ long *ansijson (unsigned char action, long *data)
       /* Expand stack */
       if (SP-_SP>=i_SP) _SP=(long*)realloc(_SP,(i_SP+=0xF)*sizeof(long));
 
-      /* MAlloc a new list */
-      if (!parse->list) (parse->list=(struct aJSON**)malloc(0x7F*sizeof(struct aJSON)))[0] = parse;
+      /* Allocate a new list */
+      if (!parse->list) (parse->list=(struct aJSON**)calloc(2, 0x7F*sizeof(struct aJSON)))[0] = parse;
 
       /* Next member/element */
       if (parse->number || parse->string || parse->child) {
-        (parse->next=(struct aJSON*) malloc(sizeof(struct aJSON)))->prev = parse;
+        (parse->next=(struct aJSON*) calloc(2, sizeof(struct aJSON)))->prev = parse;
         parse=parse->next;
         parse->parent=parse->prev->parent;
         (parse->list=parse->prev->list)[parse->index=parse->prev->index+1] = parse;
         *SP=(long)parse;
       }
 
-      /* MAlloc new child struct */
+      /* Allocate new child struct */
       if ((*src==0x5B || *src==0x7B) && !parse->child) {
         *(++SP)=(long)parse;
-        (parse->child=(struct aJSON*)malloc(sizeof(struct aJSON)))->parent=parse;
+        (parse->child=(struct aJSON*)calloc(2, sizeof(struct aJSON)))->parent=parse;
         parse=parse->child;
       }
 
       switch (*src) {
-        case 0x5B: *(++SP)=(long)parse; (Y?parse->parent:parse)->type=0; src++; goto _LEX_ARRAY;
-        case 0x7B: *(++SP)=(long)parse; (Y?parse->parent:parse)->type=1; src++; goto _LEX_OBJECT;
+        case 0x5B: case 0x7B: *(++SP)=(long)parse; (Y?parse->parent:parse)->type=*src==0x5B?0:1; src++; goto _LEX_CONTAINER;
         case 0x22: *(++SP)=3; parse->type=3; src++; goto _LEX_STRING;
         case 0x2D: case 0x30 ... 0x39: parse->type=2; *(++SP)=2; goto _LEX_NUMBER;
         case 0x61 ... 0x7A: parse->type=4; *(++SP)=4; goto _LEX_BOOL;
         case 0x00: goto _EOF;
         default: _ERROR: X=Y=1; /* X=Line, Y=Column */
           while (_src<src) if (*(_src++)!=0x0A) Y++; else { X++; Y=1; } /* Find line/column */
-          snprintf(RTN=(char*) malloc(0x7F), 0x7F, "Fatal error: unexpected '%c' at %d:%d\n", *src, (int)X, (int)Y);
+          snprintf(RTN=(char*) calloc(2, 0x7F), 0x7F, "Fatal error: unexpected '%c' at %d:%d\n", *src, (int)X, (int)Y);
           perror(RTN); free(RTN); return (long*) 1;
       }
     }
 
    _LEX_NUMBER: /* Y=Point, X=Sign */
     {
-      parse->number = (double*)malloc(sizeof(double));
+      parse->number = (double*)calloc(2, sizeof(double));
       Y=1; X=*src==0x2D&&src++?-1:1;
 
      _PARSE_DIGIT:
@@ -128,10 +134,10 @@ long *ansijson (unsigned char action, long *data)
       goto _RTS;
     }
 
-   _LEX_STRING: /* A=MAlloc Size, X=Char Counter */
+   _LEX_STRING: /* A=Allocation Size, X=Char Counter */
     {
-      if (*SP==-2 && (parse->string || parse->number)) { /* MAlloc if member key string is next member of object */
-        parse->next = (struct aJSON*) malloc(sizeof(struct aJSON));
+      if (*SP==-2 && (parse->string || parse->number)) { /* Allocate if member key string is next member of object */
+        parse->next = (struct aJSON*) calloc(2, sizeof(struct aJSON));
         parse->next->prev=parse; parse=parse->next;
         (parse->list=parse->prev->list)[parse->index=parse->prev->index+1] = parse;
       }
@@ -151,7 +157,7 @@ long *ansijson (unsigned char action, long *data)
       } else goto _RTS;
     }
 
-   _LEX_BOOL: parse->number=(double*)malloc(1);
+   _LEX_BOOL: parse->number=(double*)calloc(2, 1);
     if (!strncmp((char*)src, "null", (size_t) 4) && (src+=4)) *parse->number=0; else
     if (!strncmp((char*)src, "true", (size_t) 4) && (src+=4)) *parse->number=1; else
     if (!strncmp((char*)src, "false", (size_t) 5) && (src+=5)) *parse->number=0; else
@@ -161,8 +167,8 @@ long *ansijson (unsigned char action, long *data)
  _ENCODE:
   {
     A=X=1; parse=_parse= (struct aJSON*) data;
-    RTN = src = (char*) malloc((size_t)(Y=0xFFFF));
-    _src=__src = (char*) malloc(0xFF);
+    RTN = src = (char*) calloc(2, (size_t)(Y=0xFFFF));
+    _src=__src = (char*) calloc(2, 0xFF);
 
    _ERTS:
     /* Expand buffer */
