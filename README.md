@@ -79,5 +79,5 @@ printf("%d", result->number); /* The expected output is 22 */
 
 /* Tip: You can use mixed keys & indexes */
 struct aJSON *_data = (struct aJSON*) ansijson(0, (long*) "{ \"node0\": { \"node1\": 1, \"node2\": { \"node3\": [ 11, 22, 33 ] } } }");
-struct aJSON *_result = ajsonLookup(_data, (char*[]){"node0",1,"node3",1}, 4);
+struct aJSON *_result = (struct aJSON*) ajsonLookup(_data, (char*[]){"node0",1,"node3",1}, 4);
 ```
