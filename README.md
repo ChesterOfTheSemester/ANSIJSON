@@ -1,4 +1,4 @@
-# ANSI JSON  0.2 (Work In Progress)
+# ANSI JSON  0.2
 [*ANSI JSON*](https://ansijson.com) is a single-file, cross-platform, portable & lightweight [JSON](https://json.org) parser/encoder/decoder written in ANSI C. It is compatible with ANSI C/C++ compilers and above.
 
 I wrote this library for a few personal upcoming projects. Feel free to use this in your own project.
