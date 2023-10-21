@@ -85,9 +85,9 @@ This function removes an `aJSON` element and its children from the data structur
 Usage Example:
 ```c
 root = eraseAJSON(root, number);
-// The expected contents of `root` is now {"name": "Chester", "age": 32, "favorite_numbers": [17, 42, 51]}
+// The expected contents of `root` is now {"name": "Chester", "age": 32, "favorite_numbers": [17, 42, 32]}
 root = eraseAJSON(root, age);
-// The expected contents of `root` is now {"name": "Chester", "favorite_numbers": [17, 42, 51]}
+// The expected contents of `root` is now {"name": "Chester", "favorite_numbers": [17, 42, 32]}
 ```
 
 ### `void appendAJSON (struct aJSON *target, struct aJSON *src)`
