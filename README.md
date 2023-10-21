@@ -119,8 +119,6 @@ In addition to the C functions, ANSIJSON provides the following C++ methods for 
 
 These C++ methods provide a convenient and object-oriented way to work with ANSIJSON.
 
-### ==============================
-
 ## MIT License
 
 > Copyright (c) 2023 Chester Abrahams
