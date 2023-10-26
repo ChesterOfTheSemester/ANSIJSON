@@ -9,7 +9,7 @@ ANSIJSON is a C/C++ (C90/CXX98 and above) library for parsing and encoding JSON 
 - **JSON Parsing**: ANSIJSON provides the `decodeAJSON` function to parse JSON strings and create a structured representation of the data.
 - **JSON Encoding**: You can use the `encodeAJSON` function to convert ANSIJSON data structures back into JSON strings.
 - **Data Structure**: ANSIJSON defines a data structure called `aJSON` for representing JSON data. It includes features like nested objects, arrays, numbers, strings, boolean values, and optional C++ methods.
-- **Optional C++ methods** If compiled with C++, the structure `aJSON` will contain a number of object-oriented methods for working with `aJSON` elements.
+- **Optional C++ methods**: If compiled with C++, the structure `aJSON` will contain a number of object-oriented methods for working with `aJSON` elements.
 
 ## Data Structure
 
