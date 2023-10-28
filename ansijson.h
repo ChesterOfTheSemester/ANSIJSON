@@ -48,7 +48,7 @@ struct aJSON *decodeAJSON (char *srcArg)
                     *parse0 = parse;
     char            *src = srcArg,
                     *src0 = src,
-                    c;
+                    *_src, c;
     double          A=0,X=0,Y=0; /* Multi-purpose variables */
     int             Z=0,W=0,K=0,H=0;
 
@@ -158,7 +158,8 @@ struct aJSON *decodeAJSON (char *srcArg)
 
     _LEX_STRING: /* A=Allocation Size, X=Char Counter, Y=Is_Key Boolean */
     if (*src == 0x22) src++;
-    parse->string = (char*) calloc((size_t) (A=0xFFF), sizeof(char)); X=-1;
+    for (X=0,_src=src; *(_src-1)!=0x5C && *_src!=0x22; _src++) X++; /* Pre-calculate string length before allocation */
+    parse->string = (char*) calloc((size_t) (A=X+3), sizeof(char)); X=-1;
     _PARSE_CHAR: /* Character parsing loop */
     if (*src==0x5C) { /* Escape sequences and converting UNICODE characters */
         src++; X++;
