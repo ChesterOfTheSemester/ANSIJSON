@@ -512,7 +512,7 @@ void freeAJSON(struct aJSON *srcArg)
 
     while (heap_current)
     {
-        // Deallocate values
+        /* Deallocate values */
         while (element)
         {
             if (element->type == 2 && element->string)
@@ -527,7 +527,7 @@ void freeAJSON(struct aJSON *srcArg)
             dealloc_i++;
         }
 
-        // Jump to next heap
+        /* Jump to next heap */
         heap_tmp = heap_current;
         heap_current = heap_current->next;
         element = heap_current + 1;
@@ -538,7 +538,7 @@ void freeAJSON(struct aJSON *srcArg)
         dealloc_i = 0;
     }
 
-    // Deallocate heaps
+    /* Deallocate heaps */
     heap_current = heap_root;
     while (heap_current) {
         heap_tmp = heap_current;
