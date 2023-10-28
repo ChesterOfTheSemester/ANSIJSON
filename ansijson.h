@@ -183,11 +183,11 @@ struct aJSON *decodeAJSON (char *srcArg)
             default: parse->string[(int)X] = *src++; break;
         }
     }
-    if (++X+1 > A) parse->string = (char*) realloc(parse->string, sizeof(char) * (int)(A+=0xFFFF)); /* Extend string buffer */
+    if (++X+1 > A) parse->string = (char*) realloc(parse->string, sizeof(char) * (int)(A+=0xFFF)); /* Extend string buffer */
     if (*src != 0x22) parse->string[(int)X] = (char) *(src++);
     if (*src != 0x22) goto _PARSE_CHAR;
     parse->string[(int)++X] = 0x00; /* Insert NUL terminator (end of string) and then resize */
-    if (X < A) parse->string = (char*) realloc(parse->string, sizeof(char) * (int)X+1); src++;
+    src++;
 
     if (Y) { /* Continue to lex member if this string was a key */
         parse->key = parse->string;
