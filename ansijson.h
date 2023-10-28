@@ -34,20 +34,27 @@ typedef struct aJSON {
     struct aJSON *erase();
     struct aJSON *append(struct aJSON *src);
     struct aJSON *append(char *src);
+    void free();
 #endif
 } aJSON;
 
 struct aJSON *decodeAJSON (char *srcArg)
 {
-    struct aJSON    *pool_struct = (struct aJSON*) calloc(0x40, sizeof(struct aJSON)),
-                    *parse = &pool_struct[0],
+    unsigned        heap_struct_c = 1, heap_struct_max = 0xFF;
+    struct aJSON    *heap = (struct aJSON*) calloc(heap_struct_max, sizeof(struct aJSON)),
+                    *heap_current = heap,
+                    *parse = heap + 1,
                     *parse0 = parse;
-    unsigned        pool_struct_c = 1, pool_struct_mul = 1;
     char            *src = srcArg,
                     *src0 = src,
                     c;
     double          A=0,X=0,Y=0; /* Multi-purpose variables */
     int             Z=0,W=0,K=0,H=0;
+
+    /* Init heap */
+    heap->parent = heap;
+    heap->child = parse;
+    heap->integer = 0x1F1F;
 
     goto _LEX_CONTAINER; /* JSON always starts with a container */
 
@@ -72,9 +79,9 @@ struct aJSON *decodeAJSON (char *srcArg)
     _LEX_MEMBER:
     if (*src && *src==0x5B || *src==0x7B) src++; /* Y = (bool) Is a member string: use *key as parse target and return to _LEX_MEMBER */
     while (*src && *src<0x21) src++;
-    if (*src != 0x22) { parse->key = (char*) 1; goto _LEX_VALUE; }
+    if (*src != 0x22) { parse->key = NULL; goto _LEX_VALUE; }
     else if (Y) goto _LEX_STRING;
-    else   goto _LEX_VALUE;
+    else        goto _LEX_VALUE;
 
     _LEX_VALUE:
     while (*src && *src<0x21) src++;
@@ -82,15 +89,28 @@ struct aJSON *decodeAJSON (char *srcArg)
     while (*src && *src<0x21) src++;
     if (*src == 0x5D || *src == 0x7D) goto _RTS; /* Return subroutine if closing delimiter is encountered */
 
-    /* Reset structure pool when it's exceeded  */
-    if (pool_struct_c+2 >= 0x40) {
-        pool_struct = (struct aJSON*) calloc(0x40, sizeof(struct aJSON));
-        pool_struct_c = 0;
+    /* Allocate new heap page when it's exceeded heap_struct_max */
+    if (heap_struct_c+2 >= heap_struct_max)
+    {
+        heap_current->next = (struct aJSON*) calloc(heap_struct_max, sizeof(struct aJSON));
+        heap_current->next->prev = heap_current;
+        heap_current = heap_current->next;
+
+        heap_current->parent = heap;
+        heap_current->child = parse;
+        heap_current->integer = 0x1F1F;
+        heap_struct_c = 0;
+
+        (heap_current+1)->index_neighbor = parse->index_neighbor;
+        (heap_current+1)->prev = parse->prev;
+        (heap_current+1)->key = parse->key;
     }
 
     /* Next element/member */
     if (parse->type || parse->floatval || parse->string || parse->child) {
-        parse->next = &pool_struct[pool_struct_c++];
+        parse->next = heap_current+(++heap_struct_c);
+        heap_current->index_neighbor++;
+        if (!heap_current->child) heap_current->child = parse->next;
         parse->next->prev = parse;
         parse = parse->next;
         parse->index_neighbor = parse->prev->index_neighbor+1;
@@ -101,7 +121,9 @@ struct aJSON *decodeAJSON (char *srcArg)
 
     /* Child nesting */
     if (!parse->child && (*src==0x5B || *src==0x7B)) {
-        parse->child = &pool_struct[pool_struct_c++];
+        parse->child = heap_current+(++heap_struct_c);
+        heap_current->index_neighbor++;
+        if (!heap_current->child) heap_current->child = parse->child;
         parse->child->parent = parse;
         parse = parse->child;
         parse->index_nested = parse->parent->index_nested+1;
@@ -121,7 +143,7 @@ struct aJSON *decodeAJSON (char *srcArg)
     _LEX_NUMBER: /* Y=Decimal point location, X=Sign flag */
     X = *src==0x2D && src++?-1:1; Y = 1;
     if (*src<0x30 || *src>0x39) goto _ERROR;
-    if (X<0) parse->is_signed=1;
+    if (X<0) parse->is_signed = 1;
 
     _PARSE_DIGIT:
     while (*src==0x2E || *src==0x45 || *src==0x65 || *src==0x2B || *src==0x2D) if (*(src++)==0x2E && Y==1) Y=-1; /* Determine sign */
@@ -384,16 +406,24 @@ void appendAJSON (struct aJSON *targetArg, struct aJSON *srcArg)
             tmp->index_neighbor--;
             tmp = tmp->next;
         }
+
+    /* Bind heaps */
+    while (targetArg->prev) targetArg = targetArg->prev;
+    tmp = targetArg - 1;
+    while (tmp->next) tmp = tmp->next;
+    tmp->next = srcArg - 1;
+    (srcArg-1)->prev = tmp;
+    (srcArg-1)->index_neighbor = (srcArg-1)->prev->index_neighbor + 1;
 }
 
 struct aJSON *accessAJSON (struct aJSON *targetArg, char *path)
 {
-    struct aJSON    *i = targetArg,
-                    *rtn;
-    const char      *start = path,
-                    *end;
-    int             len,
-                    index;
+    struct aJSON *i = targetArg,
+                 *rtn;
+    const char   *start = path,
+                 *end;
+    int          len,
+                 index;
 
     while ((start = strchr(start, '[')) != NULL)
     {
@@ -465,7 +495,52 @@ struct aJSON *accessAJSON (struct aJSON *targetArg, char *path)
         start = end+1;
     }
 
-    return rtn->child ? rtn->child : rtn;
+    return rtn ? (rtn->child ? rtn->child : rtn) : NULL;
+}
+
+void freeAJSON(struct aJSON *srcArg)
+{
+    unsigned dealloc_i = 0;
+    struct aJSON *heap_root = srcArg - 1,
+                 *heap_current = heap_root,
+                 *heap_tmp,
+                 *element = heap_root + 1;
+
+    while (heap_current)
+    {
+        // Deallocate values
+        while (element)
+        {
+            if (element->type == 2 && element->string)
+                free(element->string);
+            if (element->key > (char*) 0x20 && element->key[0] != '\0' && element->key[0] > 0)
+                free(element->key);
+
+            if (dealloc_i >= heap_current->index_neighbor)
+                break;
+
+            element++;
+            dealloc_i++;
+        }
+
+        // Jump to next heap
+        heap_tmp = heap_current;
+        heap_current = heap_current->next;
+        element = heap_current + 1;
+
+        if (!heap_current || !heap_current->index_neighbor)
+            break;
+
+        dealloc_i = 0;
+    }
+
+    // Deallocate heaps
+    heap_current = heap_root;
+    while (heap_current) {
+        heap_tmp = heap_current;
+        heap_current = heap_current->next;
+        free(heap_tmp);
+    }
 }
 
 #ifdef __cplusplus
@@ -474,6 +549,9 @@ struct aJSON *aJSON::access(char *path) { return accessAJSON(this, path); }
 struct aJSON *aJSON::erase() { return eraseAJSON(this); }
 struct aJSON *aJSON::append(struct aJSON *src) { appendAJSON(this, src); return this; }
 struct aJSON *aJSON::append(char *src) { appendAJSON(this, decodeAJSON(src)); return this; }
+void aJSON::free() { freeAJSON(this); }
 #endif
 
 #endif
+
+#include <immintrin.h>

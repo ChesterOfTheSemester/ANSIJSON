@@ -9,6 +9,7 @@ int main(int argc, char *argv[])
     struct aJSON *example1_data = decodeAJSON(readFile("../examples/json/hello_world.json"));
     appendAJSON(example1_data->next, decodeAJSON("{\"one_more\": \"!\"}"));
     printf("Example 1:\n%s\n", encodeAJSONUnformatted(example1_data));
+    freeAJSON(example1_data); // Deallocate
 
     // Print a slightly more complex JSON file containing dimensions, floats, unicodes and more
     struct aJSON *example2_data = decodeAJSON(readFile("../examples/json/complex.json"));
