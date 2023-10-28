@@ -26,7 +26,8 @@ typedef struct aJSON {
                     type,                   /* Type of the value: (0=Container, 1=Number, 2=String, 3=Boolean) */
                     is_null,                /* True if the value is NULL (if the value is a boolean) */
                     is_signed,              /* True if the number value is signed (negative) */
-                    has_decimal_point;      /* True if the number value has a decimal point */
+                    has_decimal_point,      /* True if the number value has a decimal point */
+                    has_key;                /* True if the value structure has a key */
 
 #ifdef __cplusplus /* Optional C++ methods */
     char *encode(int format = 0);
@@ -104,6 +105,7 @@ struct aJSON *decodeAJSON (char *srcArg)
         (heap_current+1)->index_neighbor = parse->index_neighbor;
         (heap_current+1)->prev = parse->prev;
         (heap_current+1)->key = parse->key;
+        (heap_current+1)->has_key = parse->has_key;
     }
 
     /* Next element/member */
@@ -191,6 +193,7 @@ struct aJSON *decodeAJSON (char *srcArg)
 
     if (Y) { /* Continue to lex member if this string was a key */
         parse->key = parse->string;
+        parse->has_key = 1;
         parse->string = 0; Y = 0;
         while (*src && *src==0x3A || *src<0x21) src++;
         goto _LEX_VALUE;
@@ -513,7 +516,7 @@ void freeAJSON(struct aJSON *srcArg)
         {
             if (element->type == 2 && element->string)
                 free(element->string);
-            if (element->key > (char*) 0x20 && element->key[0] != '\0' && element->key[0] > 0)
+            if (element->has_key == 1 && element->key)
                 free(element->key);
 
             if (dealloc_i >= heap_current->index_neighbor)

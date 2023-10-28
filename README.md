@@ -31,7 +31,8 @@ typedef struct aJSON {
                  type,              /* Type of the value: (0=Container, 1=Number, 2=String, 3=Boolean) */
                  is_null,           /* True if the value is NULL (if the value is a boolean) */
                  is_signed,         /* True if the number value is signed (negative) */
-                 has_decimal_point; /* True if the number value has a decimal point */
+                 has_decimal_point, /* True if the number value has a decimal point */
+                 has_key;           /* True if the value structure has a key */
 
 #ifdef __cplusplus /* Optional C++ methods */
     char *encode(int format = 0);
