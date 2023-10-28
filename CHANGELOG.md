@@ -2,4 +2,4 @@
 Added `freeAJSON` method that lets you recursively deallocate an aJSON struct.
 
 # Version 0.3.0 released 10/21/2023
-Major release. Added new methods including optional C++ methods. See `README.md` for more information.
+Major release. Added new functions including optional C++ methods. See `README.md` for more information.
