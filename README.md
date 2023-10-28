@@ -67,14 +67,14 @@ char *json = encodeAJSON(root, 1);
 // `json` now contains a formatted JSON string representing the `root` structure
 ```
 
-### `char *freeAJSON (struct aJSON *srcArg)`
+### `void freeAJSON (struct aJSON *srcArg)`
 
 This function will recursively deallocate a `aJSON` data structure. It takes an `aJSON` element.
 
 Usage Example:
 ```c
-char *json = freeAJSON(root);
-// The heap of structure `json` has now been deallocated.
+freeAJSON(root);
+// The heap of structure `root` has now been deallocated.
 ```
 
 ### `struct aJSON *accessAJSON (struct aJSON *target, char *path)`
