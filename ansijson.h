@@ -557,5 +557,3 @@ void aJSON::free() { freeAJSON(this); }
 #endif
 
 #endif
-
-#include <immintrin.h>
