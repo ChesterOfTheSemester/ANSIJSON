@@ -158,7 +158,7 @@ struct aJSON *decodeAJSON (char *srcArg)
 
     _LEX_STRING: /* A=Allocation Size, X=Char Counter, Y=Is_Key Boolean */
     if (*src == 0x22) src++;
-    for (X=0,_src=src; *(_src-1)!=0x5C && *_src!=0x22; _src++) X++; /* Pre-calculate string length before allocation */
+    for (X=0,_src=src; !(*(_src-1)!=0x5C && *_src==0x22); _src++) X++; /* Pre-calculate string length before allocation */
     parse->string = (char*) calloc((size_t) (A=X+3), sizeof(char)); X=-1;
     _PARSE_CHAR: /* Character parsing loop */
     if (*src==0x5C) { /* Escape sequences and converting UNICODE characters */
@@ -186,7 +186,7 @@ struct aJSON *decodeAJSON (char *srcArg)
             default: parse->string[(int)X] = *src++; break;
         }
     }
-    if (++X+1 > A) parse->string = (char*) realloc(parse->string, sizeof(char) * (int)(A+=0xFFF)); /* Extend string buffer */
+    if (++X+1 > A) parse->string = (char*) realloc(parse->string, (size_t) (sizeof(char) * (A+=0xFFF))); /* Extend string buffer */
     if (*src != 0x22) parse->string[(int)X] = (char) *(src++);
     if (*src != 0x22) goto _PARSE_CHAR;
     parse->string[(int)++X] = 0x00; /* Insert NUL terminator (end of string) and then resize */
@@ -221,8 +221,9 @@ char *encodeAJSON (struct aJSON *srcArg, unsigned int format)
                  mul_string = 1,
                  mul_rts = 1,
                  i;
-    char         *rtn = (char*) calloc(rtn_max, sizeof(char)),
-                 *rtn0 = rtn,
+    char         *rtn0 = (char*) calloc(rtn_max, sizeof(char)),
+                 *rtn = rtn0,
+                 *rtn_tmp,
                  sample[0x20],
                  *c;
 
@@ -255,6 +256,7 @@ char *encodeAJSON (struct aJSON *srcArg, unsigned int format)
                 /* Extend return string */
                 if ((rtn-rtn0)+(sizeof(char)*3) >= rtn_max) {
                     rtn_pos = rtn - rtn0;
+                    rtn_tmp = rtn0;
                     rtn0 = (char*) realloc(rtn0, sizeof(char) * (unsigned int) (rtn_max+=0xFFF));
                     rtn = rtn0 + rtn_pos;
                 }
@@ -289,7 +291,8 @@ char *encodeAJSON (struct aJSON *srcArg, unsigned int format)
                 /* Extend return string */
                 if ((rtn-rtn0)+(sizeof(char)*3) >= rtn_max) {
                     rtn_pos = rtn - rtn0;
-                    rtn0 = (char*) realloc(rtn0, sizeof(char) * (unsigned int) (rtn_max+=(0xFFF*mul_string++)));
+                    rtn_tmp = rtn0;
+                    rtn0 = (char*) realloc(rtn0, sizeof(char) * (rtn_max+=(0xFFFF*mul_string++)));
                     rtn = rtn0 + rtn_pos;
                 }
             }
@@ -349,12 +352,9 @@ char *encodeAJSON (struct aJSON *srcArg, unsigned int format)
 
     /* Resize return string before return */
     _EOF:
-    /* Add formatting */
-    if (format && (*(rtn++)=0xA)) for (i=0;i<src->index_nested+1;i++) *(rtn++)=0x9;
-    else *(rtn++) = 0x20;
     rtn_pos = rtn - rtn0;
-    rtn0 = (char*) realloc(rtn0, sizeof(char) * (unsigned int) (rtn-rtn0));
-    *(rtn0 + rtn_pos) = 0;
+    rtn0 = (char*) realloc(rtn0, (size_t) (rtn0+rtn_pos));
+    *(rtn0+rtn_pos) = 0;
     return rtn0;
 }
 
@@ -449,20 +449,14 @@ struct aJSON *accessAJSON (struct aJSON *targetArg, char *path)
                 /* Left-hand search */
                 if (i->prev)
                     while (i) {
-                        if (!strcmp(substring, i->key)) {
-                            rtn = i;
-                            break;
-                        }
+                        if (!strcmp(substring, i->key)) { rtn = i; break; }
                         i = i->prev;
                     }
 
                 /* Right-hand search */
                 if (i->next)
                     while (i) {
-                        if (!strcmp(substring, i->key)) {
-                            rtn = i;
-                            break;
-                        }
+                        if (!strcmp(substring, i->key)) { rtn = i; break; }
                         i = i->next;
                     }
 
@@ -476,20 +470,14 @@ struct aJSON *accessAJSON (struct aJSON *targetArg, char *path)
                 /* Left-hand search */
                 if (i->prev)
                     while (i) {
-                        if (index == i->index_neighbor) {
-                            rtn = i;
-                            break;
-                        }
+                        if (index == i->index_neighbor) { rtn = i; break; }
                         i = i->prev;
                     }
 
                 /* Right-hand search */
                 if (i->next)
                     while (i) {
-                        if (index == i->index_neighbor) {
-                            rtn = i;
-                            break;
-                        }
+                        if (index == i->index_neighbor) { rtn = i; break; }
                         i = i->next;
                     }
 
