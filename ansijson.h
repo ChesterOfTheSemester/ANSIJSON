@@ -1,4 +1,4 @@
-/* ANSIJSON 0.3.1
+/* ANSIJSON 0.3.2
  * https://ansijson.com
  * Written by : Chester Abrahams
  * Portfolio  : https://atomiccoder.com
@@ -100,7 +100,7 @@ struct aJSON *decodeAJSON (char *srcArg)
         heap_current->parent = heap;
         heap_current->child = parse;
         heap_current->integer = 0x1F1F;
-        heap_struct_c = 0;
+        heap_struct_c = 1;
 
         (heap_current+1)->index_neighbor = parse->index_neighbor;
         (heap_current+1)->prev = parse->prev;
@@ -229,11 +229,11 @@ char *encodeAJSON (struct aJSON *srcArg, unsigned int format)
 
     _RTS:
     /* Extend return string */
-    if ((rtn-rtn0)+(sizeof(char)*3) >= rtn_max) {
+    if ((rtn-rtn0)+(sizeof(char)*10) >= rtn_max) {
         rtn_pos = rtn - rtn0;
         c = (char*) calloc(rtn_pos + (rtn_max+=(0xFFFF * mul_rts++)), sizeof(char));
-        for (rtn=c;*rtn0;rtn0++) *(c++) = *rtn0;
-        c = rtn;
+        c = strcpy(c, rtn0);
+        free(rtn0);
         rtn0 = c;
         rtn = rtn0 + rtn_pos;
     }
@@ -257,8 +257,11 @@ char *encodeAJSON (struct aJSON *srcArg, unsigned int format)
                 if ((rtn-rtn0)+(sizeof(char)*3) >= rtn_max) {
                     rtn_pos = rtn - rtn0;
                     rtn_tmp = rtn0;
-                    rtn0 = (char*) realloc(rtn0, sizeof(char) * (unsigned int) (rtn_max+=0xFFF));
-                    rtn = rtn0 + rtn_pos;
+                    rtn_tmp = (char*) calloc((rtn_max+=(0xFFFF*mul_string++)), sizeof(char));
+                    rtn_tmp = strcpy(rtn_tmp, rtn0);
+                    rtn = rtn_tmp + rtn_pos;
+                    free(rtn0);
+                    rtn0 = rtn_tmp;
                 }
             }
         *(rtn++) = 0x22;
@@ -292,8 +295,11 @@ char *encodeAJSON (struct aJSON *srcArg, unsigned int format)
                 if ((rtn-rtn0)+(sizeof(char)*3) >= rtn_max) {
                     rtn_pos = rtn - rtn0;
                     rtn_tmp = rtn0;
-                    rtn0 = (char*) realloc(rtn0, sizeof(char) * (rtn_max+=(0xFFFF*mul_string++)));
-                    rtn = rtn0 + rtn_pos;
+                    rtn_tmp = (char*) calloc((rtn_max+=(0xFFFF*mul_string++)), sizeof(char));
+                    rtn_tmp = strcpy(rtn_tmp, rtn0);
+                    rtn = rtn_tmp + rtn_pos;
+                    free(rtn0);
+                    rtn0 = rtn_tmp;
                 }
             }
             *(rtn++) = 0x22;

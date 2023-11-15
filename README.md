@@ -1,4 +1,4 @@
-# ANSIJSON 0.3.1 Library Documentation
+# ANSIJSON 0.3.2 Library Documentation
 
 ## Overview
 
