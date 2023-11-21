@@ -64,7 +64,7 @@ This function encodes an `aJSON` data structure into a JSON string. It takes an 
 Usage Example:
 ```c
 char *json = encodeAJSON(root, 1);
-// `json` now contains a formatted JSON string representing the `root` structure
+// `json` now contains a formatted JSON string representing the `root` structure.
 ```
 
 ### `void freeAJSON (struct aJSON *srcArg)`
