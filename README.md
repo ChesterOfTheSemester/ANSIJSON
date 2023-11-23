@@ -84,9 +84,9 @@ This function allows you to access a specific `aJSON` element within the data st
 Usage Example:
 ```c
 struct aJSON *age = accessAJSON(root, "[\"age\"]");
-// `age` now points to the specified. element (second element of member-object "favorite_numbers")
+// `age` now points to the specified. element (second element of member-object "favorite_numbers").
 struct aJSON *number = accessAJSON(root, "[\"favorite_numbers\"][2]");
-// `number` now points to the specified element (the third element of member-object "favorite_numbers")
+// `number` now points to the specified element (the third element of member-object "favorite_numbers").
 ```
 
 ### `struct aJSON *eraseAJSON (struct aJSON *src)`
