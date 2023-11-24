@@ -54,7 +54,7 @@ Usage Example:
 ```c
 char *json = "{\"name\": \"Chester\", \"age\": 32, \"favorite_numbers\": [17, 42, 51, 32]}";
 struct aJSON *root = decodeAJSON(json); 
-// `root` now points to the root of the parsed JSON data
+// `root` now points to the root of the parsed JSON data.
 ```
 
 ### `char *encodeAJSON (struct aJSON *src, unsigned int format)`
