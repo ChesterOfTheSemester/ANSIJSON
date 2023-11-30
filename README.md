@@ -164,4 +164,4 @@ Official [Github](https://ansijson.com).
 
 ---
 
-This README provides an overview of the ANSIJSON library and its usage. For more in-depth information and usage examples, refer to the `examples/` directory in the official [Github](https://ansijson.com) page...
+This README provides an overview of the ANSIJSON library and its usage. For more in-depth information and usage examples, refer to the `examples/` directory in the official [Github](https://ansijson.com) page.
