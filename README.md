@@ -98,7 +98,7 @@ Usage Example:
 root = eraseAJSON(root, number);
 // The expected contents of `root` is now {"name": "Chester", "age": 32, "favorite_numbers": [17, 42, 32]}
 root = eraseAJSON(root, age);
-// The expected contents of `root` is now {"name": "Chester", "favorite_numbers": [17, 42, 32]}
+// The expected contents of `root` is now {"name": "Chester", "favorite_numbers": [17, 42, 32, 33]}
 ```
 
 ### `void appendAJSON (struct aJSON *target, struct aJSON *src)`
