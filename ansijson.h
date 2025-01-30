@@ -161,31 +161,42 @@ struct aJSON *decodeAJSON (char *srcArg)
     for (X=0,_src=src; !(*(_src-1)!=0x5C && *_src==0x22); _src++) X++; /* Pre-calculate string length before allocation */
     parse->string = (char*) calloc((size_t) (A=X+3), sizeof(char)); X=-1;
     _PARSE_CHAR: /* Character parsing loop */
-    if (*src==0x5C) { /* Escape sequences and converting UNICODE characters */
+    if (*src == 0x5C) { /* Escape sequences and converting UNICODE characters */
         src++; X++;
         switch (*src) {
             case '\\': case '/': case 'b':
-            case 'f':  case 'n':  case 'r' :
-            case 't' : case '\"':
+            case 'f':  case 'n': case 'r':
+            case 't':  case '\"':
                 parse->string[(int)X++] = '\\';
-                parse->string[(int)X] = *src++; break;
-            case 'u': Z = *(++src); W = 0; W = 0;
+                parse->string[(int)X] = *src++;
+                break;
+            case 'u':
+                W = 0; src++;
                 for (H = 0; H < 4; H++) { /* Convert hex characters to int */
-                    W = W * 16 + ((*src >= 'A' && *src <= 'F') ? *src - 'A' + 10 :
-                                  (*src >= 'a' && *src <= 'f') ? *src - 'a' + 10 :
-                                  (*src >= '0' && *src <= '9') ? *src - '0' : -1);
-                    Z = *(++src); }
-                Z = (W <= 0x7F) ? 1 : (W <= 0x7FF) ? 2 : (W <= 0xFFFF) ? 3 : 4; /* Count number of bytes used */
-                K = (Z == 1) ? 0x00 : (Z == 2) ? 0xC0 : (Z == 3) ? 0xE0 : 0xF0; /* Find leading byte */
-                for (H = Z - 1; H > 0; H--) parse->string[(int)X + H] = (char)((W & 0x3F) | 0x80), W >>= 6; /* Encode bytes individually */
-                c = (char)(W | K);
-                if (Z == 1 && (c=='\\'&&(c='\\'))||(c=='\/'&&(c='/'))||(c=='\b'&&(c='b'))||(c=='\f'&&(c='f'))||(c=='\n'&&(c='n'))||(c=='\r'&&(c='r'))||(c=='\t'&&(c='t'))||(c=='\"'&&(c='"'))) parse->string[(int)X++] = '\\';
-                else if (Z == 1) { for (Z=0,src-=6;Z<6;Z++) parse->string[(int)X++] = *(src++); X--; goto _PARSE_CHAR; } /* Don't proceed with encoding if it's 1 byte */
-                parse->string[(int)X] = c; /* Encode first byte of UTF-8 encoding */
-                X += Z-1; goto _PARSE_CHAR;
+                    W = (W << 4) | ((*src >= 'A' && *src <= 'F') ? *src - 'A' + 10 :
+                                    (*src >= 'a' && *src <= 'f') ? *src - 'a' + 10 :
+                                    (*src >= '0' && *src <= '9') ? *src - '0' : -1); src++; }
+                /* Check if this is a high surrogate */
+                if (W >= 0xD800 && W <= 0xDBFF && *src == '\\' && *(src + 1) == 'u') {
+                    /* Process the low surrogate */
+                    int W2 = 0; src += 2; /* Skip \u */
+                    for (H = 0; H < 4; H++) {
+                        W2 = (W2 << 4) | ((*src >= 'A' && *src <= 'F') ? *src - 'A' + 10 :
+                                          (*src >= 'a' && *src <= 'f') ? *src - 'a' + 10 :
+                                          (*src >= '0' && *src <= '9') ? *src - '0' : -1); src++; }
+                    /* Convert surrogate pair to a UNICODE code point */
+                    W = 0x10000 + (((W - 0xD800) << 10) | (W2 - 0xDC00)); }
+                /* Determine UTF-8 encoding length */
+                Z = (W <= 0x7F) ? 1 : (W <= 0x7FF) ? 2 : (W <= 0xFFFF) ? 3 : 4;
+                K = (Z == 1) ? 0x00 : (Z == 2) ? 0xC0 : (Z == 3) ? 0xE0 : 0xF0;
+                /* Encode bytes individually */
+                for (H = Z - 1; H > 0; H--) { parse->string[(int)X + H] = (char)((W & 0x3F) | 0x80); W >>= 6; }
+                parse->string[(int)X] = (char)(W | K); /* Encode first byte */
+                X += Z - 1; goto _PARSE_CHAR;
             default: parse->string[(int)X] = *src++; break;
         }
     }
+
     if (++X+1 > A) parse->string = (char*) realloc(parse->string, (size_t) (sizeof(char) * (A+=0xFFF))); /* Extend string buffer */
     if (*src != 0x22) parse->string[(int)X] = (char) *(src++);
     if (*src != 0x22) goto _PARSE_CHAR;
