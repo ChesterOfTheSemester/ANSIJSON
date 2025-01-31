@@ -57,6 +57,27 @@ struct aJSON *root = decodeAJSON(json);
 // `root` now points to the root of the parsed JSON data.
 ```
 
+### Handling `\u` Unicode Sequences
+
+ANSIJSON automatically decodes `\u` sequences in JSON strings (including surrogate pairs) into their UTF-8 equivalents. For example, a JSON string containing `"\\u0041"` (which represents the letter **A**) will be stored in the `aJSON` structure as `"A"` in UTF-8.
+
+Below is an example of how to decode and inspect JSON with `\u` sequences:
+
+~~~c
+// A JSON string containing \u code points, including a surrogate pair for an emoji:
+char *json_with_unicode = "{"
+    "\"greeting\": \"Hello \\u0041\\u0042\\u0043 World!\","
+    "\"emoji_test\": \"This is an emoji \\uD83D\\uDE00\""
+"}";
+struct aJSON *root = decodeAJSON(json_with_unicode);
+~~~
+
+**Important notes about `\u` encoding in ANSIJSON**:
+1. When decoding, the library converts `\uXXXX` sequences (and surrogate pairs) into their UTF-8 representations automatically.
+2. When encoding, the library outputs strings in UTF-8 rather than `\u` escapes. You will see actual UTF-8 characters in the generated JSON.
+
+---
+
 ### `char *encodeAJSON (struct aJSON *src, unsigned int format)`
 
 This function encodes an `aJSON` data structure into a JSON string. It takes an `aJSON` element and an optional `format` parameter to control formatting (0 for unformatted, 1 for formatted). It returns a dynamically allocated string representing the JSON data.
