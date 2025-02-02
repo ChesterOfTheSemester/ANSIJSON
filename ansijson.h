@@ -318,7 +318,7 @@ char *encodeAJSON (struct aJSON *srcArg, unsigned int format)
 
         case 3: /* Boolean (true/false/null) */
             memset(sample, 0, 20);
-            if (src->integer)       sprintf(sample, "%s", "true");
+            if (src->integer || src->floatval) sprintf(sample, "%s", "true");
             else if (!src->is_null) sprintf(sample, "%s", "false");
             else                    sprintf(sample, "%s", "null");
             sprintf(rtn, "%s", sample);
