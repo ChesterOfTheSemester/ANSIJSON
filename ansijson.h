@@ -1,4 +1,4 @@
-/* ANSIJSON 0.3.21
+/* ANSIJSON 0.3.2.1
  * https://ansijson.com
  * Written by : Chester Abrahams
  * Portfolio  : https://atomiccoder.com
