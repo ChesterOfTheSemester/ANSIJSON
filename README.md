@@ -52,7 +52,7 @@ This function parses a JSON string and returns a pointer to the root of the resu
 
 Usage Example:
 ```c
-char *json = "{\"name\": \"Chester\", \"age\": 32, \"favorite_numbers\": [17, 42, 51, 32]}";
+char *json = "{\"name\": \"Chester\", \"age\": 32, \"favorite_numbers\": [17, 42, 51, 32, 33]}";
 struct aJSON *root = decodeAJSON(json); 
 // `root` now points to the root of the parsed JSON data.
 ```
