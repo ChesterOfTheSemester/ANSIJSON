@@ -78,7 +78,7 @@ struct aJSON *decodeAJSON (char *srcArg)
     }
 
     _LEX_MEMBER:
-    if (*src && *src==0x5B || *src==0x7B) src++; /* Y = (bool) Is a member string: use *key as parse target and return to _LEX_MEMBER */
+    if (*src && (*src==0x5B || *src==0x7B)) src++; /* Y = (bool) Is a member string: use *key as parse target and return to _LEX_MEMBER */
     while (*src && *src<0x21) src++;
     if (*src != 0x22) { parse->key = NULL; goto _LEX_VALUE; }
     else if (Y) goto _LEX_STRING;
